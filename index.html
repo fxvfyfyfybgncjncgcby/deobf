@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUA DEOBFUSCATOR • LARRY</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #121212;
+            --accent-green: #00ff41;
+            --accent-red: #ff0055;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --border: #222;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 65, 0.03) 2px, rgba(0, 255, 65, 0.03) 4px);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+
+        header {
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-green);
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 6rem);
+            letter-spacing: 0.2em;
+            color: var(--accent-green);
+            text-shadow: 0 0 20px var(--accent-green);
+            margin-bottom: 0.5rem;
+            animation: flicker 3s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.95; }
+            51% { opacity: 1; }
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 0;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .panel:hover {
+            border-color: var(--accent-green);
+        }
+
+        .panel-header {
+            background: linear-gradient(90deg, var(--accent-green) 0%, transparent 100%);
+            padding: 1rem 1.5rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.15em;
+            color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-header::before {
+            content: '▸';
+            font-size: 1.2rem;
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            padding: 1rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        textarea::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            padding: 1rem 2.5rem;
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: var(--accent-red);
+            box-shadow: 0 0 20px var(--accent-red);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-green);
+            color: var(--bg-dark);
+        }
+
+        .status {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status.processing {
+            color: var(--accent-green);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status.error {
+            color: var(--accent-red);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: var(--accent-green);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 2px solid var(--accent-green);
+            margin-top: 4rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .warning {
+            background: rgba(255, 0, 85, 0.1);
+            border: 1px solid var(--accent-red);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            color: var(--accent-red);
+        }
+
+        .warning::before {
+            content: '⚠ ';
+            font-size: 1.2rem;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent-green);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loader.active {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Code syntax highlighting */
+        .output-code {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            max-height: 400px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .keyword { color: #ff0055; }
+        .string { color: #00ff41; }
+        .comment { color: #666; font-style: italic; }
+        .function { color: #00d4ff; }
+    </style>
+</head>
+<body>
+    <div class="scan-line"></div>
+
+    <header>
+        <h1>LARRY</h1>
+        <p class="subtitle">Lua Deobfuscator • Luraph Destroyer</p>
+    </header>
+
+    <div class="container">
+        <div class="warning">
+            <strong>MODE DEMO:</strong> Cette version frontend nécessite un backend pour exécuter le code Lua. Le décodage s'effectue côté serveur. Voir instructions en bas de page.
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-value" id="linesCount">0</span>
+                <span class="stat-label">Lignes analysées</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="remotesCount">0</span>
+                <span class="stat-label">Remotes détectés</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="stringsCount">0</span>
+                <span class="stat-label">Strings suspects</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <div class="panel-header">INPUT • CODE OBFUSQUÉ</div>
+                <div class="panel-content">
+                    <textarea id="inputCode" placeholder="-- Collez votre code Lua obfusqué ici...
+-- Exemple:
+local _0x1a2b3c = {'\x48\x65\x6c\x6c\x6f'}
+print(_0x1a2b3c[1])"></textarea>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">OUTPUT • CODE DÉOBFUSQUÉ</div>
+                <div class="panel-content">
+                    <textarea id="outputCode" readonly placeholder="-- Le résultat apparaîtra ici..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="deobfuscateBtn">
+                <span>▸ Déobfusquer</span>
+            </button>
+            <button class="btn-secondary" id="clearBtn">Effacer</button>
+            <button class="btn-secondary" id="copyBtn">Copier le résultat</button>
+            <button class="btn-secondary" id="downloadBtn">Télécharger</button>
+            <div class="status" id="status">
+                <div class="loader" id="loader"></div>
+                <span id="statusText">Prêt à déobfusquer</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">COMMENT UTILISER CE SITE</div>
+            <div class="panel-content" style="color: var(--text-secondary); line-height: 1.8;">
+                <h3 style="color: var(--accent-green); margin-bottom: 1rem;">🔧 Configuration Backend (Node.js)</h3>
+                <p style="margin-bottom: 1rem;">Pour que ce site fonctionne complètement, vous devez créer un backend qui exécute le dumper.lua :</p>
+                <pre style="background: var(--bg-dark); padding: 1rem; border: 1px solid var(--border); overflow-x: auto; margin-bottom: 1.5rem;">
+<span class="comment">// server.js (Node.js + Express)</span>
+const express = require('express');
+const { exec } = require('child_process');
+const fs = require('fs');
+const app = express();
+
+app.use(express.json());
+app.use(express.static('public'));
+
+app.post('/api/deobfuscate', (req, res) => {
+    const code = req.body.code;
+    fs.writeFileSync('input.lua', code);
+    
+    exec('lua dumper.lua input.lua output.lua', (error, stdout) => {
+        if (error) {
+            return res.json({ success: false, error: error.message });
+        }
+        const result = fs.readFileSync('output.lua', 'utf8');
+        res.json({ success: true, result: result });
+    });
+});
+
+app.listen(3000, () => console.log('Server on port 3000'));
+                </pre>
+
+                <h3 style="color: var(--accent-green); margin-bottom: 1rem;">📦 Installation</h3>
+                <ol style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
+                    <li>Installez Node.js et Lua sur votre serveur</li>
+                    <li>Créez server.js avec le code ci-dessus</li>
+                    <li>Placez dumper.lua dans le même dossier</li>
+                    <li>Lancez: <code style="color: var(--accent-green);">node server.js</code></li>
+                </ol>
+
+                <h3 style="color: var(--accent-green); margin-bottom: 1rem;">🚀 Hébergement Gratuit</h3>
+                <ul style="margin-left: 1.5rem;">
+                    <li><strong>Render.com</strong> - Gratuit, supporte Node.js + Lua</li>
+                    <li><strong>Railway.app</strong> - 500h gratuites/mois</li>
+                    <li><strong>Replit</strong> - Hébergement gratuit + IDE en ligne</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>LARRY DEOBFUSCATOR v3.0 • Propulsé par dumper.lua</p>
+        <p style="margin-top: 0.5rem; opacity: 0.5;">Open Source • Éducatif uniquement</p>
+    </footer>
+
+    <script>
+        const inputCode = document.getElementById('inputCode');
+        const outputCode = document.getElementById('outputCode');
+        const deobfuscateBtn = document.getElementById('deobfuscateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const status = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const loader = document.getElementById('loader');
+
+        // Stats
+        const linesCount = document.getElementById('linesCount');
+        const remotesCount = document.getElementById('remotesCount');
+        const stringsCount = document.getElementById('stringsCount');
+
+        // Simulation du déobfuscateur (DEMO MODE)
+        deobfuscateBtn.addEventListener('click', async () => {
+            const code = inputCode.value.trim();
+            
+            if (!code) {
+                setStatus('error', 'Aucun code à déobfusquer');
+                return;
+            }
+
+            setStatus('processing', 'Déobfuscation en cours...');
+            loader.classList.add('active');
+            deobfuscateBtn.disabled = true;
+
+            // Simulation (remplacer par vraie API)
+            setTimeout(() => {
+                try {
+                    // DEMO: Simple nettoyage basique
+                    let result = code;
+                    result = result.replace(/\\x([0-9A-Fa-f]{2})/g, (match, hex) => {
+                        return String.fromCharCode(parseInt(hex, 16));
+                    });
+                    result = result.replace(/_0x[a-f0-9]+/g, 'var');
+                    
+                    outputCode.value = `-- Déobfusqué par LARRY\n-- NOTE: Ceci est une DEMO. Pour un vrai déobfuscateur, configurez le backend.\n\n${result}`;
+                    
+                    // Stats simulées
+                    const lines = result.split('\n').length;
+                    animateValue(linesCount, 0, lines, 1000);
+                    animateValue(remotesCount, 0, Math.floor(Math.random() * 10), 1000);
+                    animateValue(stringsCount, 0, Math.floor(Math.random() * 20), 1000);
+                    
+                    setStatus('success', 'Déobfuscation terminée (mode DEMO)');
+                } catch (error) {
+                    setStatus('error', 'Erreur: ' + error.message);
+                    outputCode.value = '-- Erreur lors de la déobfuscation';
+                } finally {
+                    loader.classList.remove('active');
+                    deobfuscateBtn.disabled = false;
+                }
+            }, 2000);
+        });
+
+        // Vraie API (décommenter quand backend est prêt)
+        /*
+        async function deobfuscate(code) {
+            const response = await fetch('/api/deobfuscate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            return await response.json();
+        }
+        */
+
+        clearBtn.addEventListener('click', () => {
+            inputCode.value = '';
+            outputCode.value = '';
+            linesCount.textContent = '0';
+            remotesCount.textContent = '0';
+            stringsCount.textContent = '0';
+            setStatus('', 'Prêt à déobfusquer');
+        });
+
+        copyBtn.addEventListener('click', () => {
+            outputCode.select();
+            document.execCommand('copy');
+            setStatus('success', 'Copié dans le presse-papier !');
+            setTimeout(() => setStatus('', 'Prêt à déobfusquer'), 2000);
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const blob = new Blob([outputCode.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'deobfuscated.lua';
+            a.click();
+            URL.revokeObjectURL(url);
+            setStatus('success', 'Fichier téléchargé !');
+        });
+
+        function setStatus(type, message) {
+            status.className = 'status ' + type;
+            statusText.textContent = message;
+        }
+
+        function animateValue(element, start, end, duration) {
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current);
+            }, 16);
+        }
+    </script>
+</body>
+</html>
